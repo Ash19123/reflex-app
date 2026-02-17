@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#060d1f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="REFLEX">
+<link rel="manifest" href="manifest.json">
+<title>REFLEX — Safety System</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red: #e63946;
+    --teal: #1abc9c;
+    --navy: #060d1f;
+    --panel: #0d1b3e;
+  }
+
+  html, body {
+    height: 100%; overflow: hidden;
+    background: var(--navy);
+    font-family: 'Rajdhani', sans-serif;
+    color: #fff;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: fixed; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.4s ease;
+    z-index: 10;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ── STATUS BAR ── */
+  .status-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px 6px;
+    font-size: 11px; font-weight: 600;
+  }
+  .status-time { font-size: 13px; font-weight: 700; }
+  .status-icons { display: flex; gap: 6px; }
+
+  /* ══════════════════════
+     SCREEN 1 — HOME
+  ══════════════════════ */
+  #home { background: linear-gradient(180deg, #06101f 0%, #0a0f1e 100%); }
+
+  .home-header {
+    padding: 8px 20px 0;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .app-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px; letter-spacing: 4px; color: #fff;
+  }
+  .app-name span { color: var(--red); }
+  .settings-btn {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 50%; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; cursor: pointer;
+  }
+
+  .user-card {
+    margin: 14px 20px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px; padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .user-avatar {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--red), #ff6b6b);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .user-name { font-size: 16px; font-weight: 700; }
+  .user-loc  { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .user-loc span { color: var(--teal); }
+
+  /* SOS RING */
+  .sos-wrap {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+  }
+  .sos-outer {
+    position: relative; width: 200px; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pulse-ring {
+    position: absolute; border-radius: 50%;
+    border: 1.5px solid rgba(230,57,70,0.3);
+    animation: pulse-out 2.5s ease-out infinite;
+  }
+  .pr1 { width: 200px; height: 200px; animation-delay: 0s; }
+  .pr2 { width: 170px; height: 170px; animation-delay: 0.4s; }
+  .pr3 { width: 140px; height: 140px; animation-delay: 0.8s; }
+  @keyframes pulse-out {
+    0%   { opacity: 0.5; transform: scale(0.95); }
+    50%  { opacity: 0.2; transform: scale(1.03); }
+    100% { opacity: 0.5; transform: scale(0.95); }
+  }
+
+  .sos-btn {
+    width: 120px; height: 120px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ff7070, #c0392b);
+    border: none; cursor: pointer; position: relative; z-index: 5;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    box-shadow: 0 0 30px rgba(230,57,70,0.5), 0 8px 24px rgba(0,0,0,0.5);
+    transition: transform 0.1s, box-shadow 0.1s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .sos-btn:active { transform: scale(0.93); box-shadow: 0 0 50px rgba(230,57,70,0.8); }
+  .sos-btn-label { font-family: 'Bebas Neue', sans-serif; font-size: 32px; letter-spacing: 4px; color: #fff; }
+  .sos-btn-sub   { font-size: 8px; color: rgba(255,255,255,0.7); letter-spacing: 1.5px; margin-top: -2px; }
+
+  .shake-hint {
+    font-size: 11px; color: rgba(255,255,255,0.3);
+    text-align: center; line-height: 1.7; letter-spacing: 0.5px;
+  }
+  .shake-hint strong { color: rgba(255,255,255,0.6); }
+
+  /* Shake sensitivity indicator */
+  .shake-bar-wrap {
+    width: 160px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .shake-bar-label { font-size: 8px; color: rgba(255,255,255,0.25); letter-spacing: 1px; }
+  .shake-bar-bg { width: 100%; height: 3px; background: rgba(255,255,255,0.06); border-radius: 10px; overflow: hidden; }
+  .shake-bar-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--teal), #4cc9f0); border-radius: 10px; transition: width 0.1s; }
+
+  /* Contacts row */
+  .contacts-row {
+    display: flex; justify-content: center; gap: 20px;
+    padding: 0 20px 16px;
+  }
+  .contact-item { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .contact-av {
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; border: 1.5px solid rgba(255,255,255,0.1);
+  }
+  .contact-nm { font-size: 9px; color: rgba(255,255,255,0.4); }
+
+  /* Bottom nav */
+  .bottom-nav {
+    display: flex; background: rgba(255,255,255,0.04);
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+  .nav-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    padding: 10px 0; gap: 3px; cursor: pointer;
+  }
+  .nav-tab-icon { font-size: 18px; }
+  .nav-tab-label { font-size: 8px; color: rgba(255,255,255,0.3); letter-spacing: 0.5px; }
+  .nav-tab.active .nav-tab-label { color: var(--red); }
+
+  /* ══════════════════════
+     SCREEN 2 — COUNTDOWN
+  ══════════════════════ */
+  #countdown-screen {
+    background: radial-gradient(ellipse at center, #1a0005 0%, #06000a 100%);
+    align-items: center; justify-content: center; gap: 20px;
+  }
+  .alert-banner {
+    position: absolute; top: 0; left: 0; right: 0;
+    background: var(--red); padding: 14px 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .alert-dot { width: 10px; height: 10px; border-radius: 50%; background: #fff; animation: blink 0.7s infinite; }
+  @keyframes blink { 0%,100%{opacity:1;}50%{opacity:0;} }
+  .alert-text { font-size: 13px; font-weight: 700; letter-spacing: 2px; }
+
+  .countdown-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 110px; line-height: 1; color: #fff;
+    text-shadow: 0 0 40px rgba(230,57,70,0.6);
+  }
+  .countdown-label { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 3px; }
+
+  .cancel-sos {
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,255,255,0.2);
+    color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; padding: 12px 36px; border-radius: 30px; cursor: pointer;
+  }
+
+  /* ══════════════════════
+     SCREEN 3 — ACTIVE SOS
+  ══════════════════════ */
+  #active-screen { background: #04000a; }
+
+  .active-header {
+    background: var(--red); padding: 14px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .active-title { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; }
+  .active-timer { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; }
+
+  .active-body { flex: 1; display: flex; flex-direction: column; gap: 10px; padding: 16px 16px; overflow-y: auto; }
+
+  .status-card {
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px; padding: 12px 14px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .status-card-icon { font-size: 22px; flex-shrink: 0; }
+  .status-card-info { flex: 1; }
+  .status-card-title { font-size: 13px; font-weight: 700; }
+  .status-card-sub   { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+  .status-badge {
+    font-size: 9px; font-weight: 700; letter-spacing: 1px;
+    padding: 3px 8px; border-radius: 10px;
+  }
+  .badge-green { background: rgba(26,188,156,0.2); color: var(--teal); border: 1px solid rgba(26,188,156,0.3); }
+  .badge-yellow { background: rgba(241,196,15,0.2); color: #f1c40f; border: 1px solid rgba(241,196,15,0.3); }
+  .badge-red    { background: rgba(230,57,70,0.2);  color: var(--red); border: 1px solid rgba(230,57,70,0.3); animation: blink 1s infinite; }
+
+  .coord-box {
+    background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px; padding: 10px 14px;
+    font-size: 11px; color: rgba(255,255,255,0.5);
+    font-family: monospace; line-height: 1.8;
+  }
+  .coord-box strong { color: var(--teal); }
+
+  .resolve-btn {
+    margin: 0 16px 20px;
+    background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.7); font-family: 'Rajdhani', sans-serif;
+    font-size: 14px; font-weight: 700; letter-spacing: 2px;
+    padding: 14px; border-radius: 12px; cursor: pointer; width: calc(100% - 32px);
+  }
+
+  /* ══════════════════════
+     SCREEN 4 — SETUP
+  ══════════════════════ */
+  #setup-screen { background: var(--navy); overflow-y: auto; }
+
+  .setup-header {
+    padding: 16px 20px 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    margin-bottom: 14px;
+  }
+  .setup-title { font-family: 'Bebas Neue', sans-serif; font-size: 26px; letter-spacing: 3px; }
+  .setup-sub   { font-size: 10px; color: rgba(255,255,255,0.3); letter-spacing: 1px; }
+
+  .setup-body { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px; }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-label { font-size: 10px; font-weight: 600; letter-spacing: 2px; color: rgba(255,255,255,0.4); text-transform: uppercase; }
+  .form-input {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px; padding: 12px 14px;
+    color: #fff; font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 600;
+    outline: none; width: 100%;
+  }
+  .form-input:focus { border-color: var(--red); }
+  .form-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .save-btn {
+    background: var(--red); border: none; color: #fff;
+    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 2px; padding: 14px; border-radius: 12px; cursor: pointer;
+    width: 100%; margin-top: 6px;
+  }
+
+  /* TOAST */
+  .toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: rgba(26,188,156,0.9); color: #fff;
+    padding: 10px 20px; border-radius: 20px;
+    font-size: 12px; font-weight: 700; letter-spacing: 1px;
+    z-index: 999; opacity: 0; transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* PERMISSION OVERLAY */
+  .perm-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: rgba(6,13,31,0.97);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 16px;
+    padding: 30px; text-align: center;
+  }
+  .perm-icon { font-size: 48px; }
+  .perm-title { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: #fff; }
+  .perm-sub   { font-size: 12px; color: rgba(255,255,255,0.4); line-height: 1.7; }
+  .perm-btn {
+    background: var(--red); border: none; color: #fff;
+    font-family: 'Rajdhani', sans-serif; font-size: 15px; font-weight: 700;
+    letter-spacing: 2px; padding: 14px 36px; border-radius: 30px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- PERMISSION OVERLAY -->
+<div class="perm-overlay" id="permOverlay">
+  <div class="perm-icon">🛡️</div>
+  <div class="perm-title">REFLEX</div>
+  <div class="perm-sub">
+    REFLEX needs access to your<br>
+    <strong style="color:#fff">📍 Location</strong> and <strong style="color:#fff">📳 Motion sensors</strong><br>
+    to protect you in emergencies.
+  </div>
+  <button class="perm-btn" onclick="requestPermissions()">ALLOW & ACTIVATE</button>
+</div>
+
+<!-- ── HOME SCREEN ── -->
+<div class="screen active" id="home">
+  <div class="status-bar">
+    <span class="status-time" id="clockDisplay">09:41</span>
+    <div class="status-icons"><span>📶</span><span>🔋</span></div>
+  </div>
+  <div class="home-header">
+    <div class="app-name">REFLE<span>X</span></div>
+    <div class="settings-btn" onclick="showScreen('setup-screen')">⚙️</div>
+  </div>
+
+  <div class="user-card">
+    <div class="user-avatar">👩</div>
+    <div>
+      <div class="user-name" id="displayName">Aasritha</div>
+      <div class="user-loc">📍 <span id="locationLabel">Getting location…</span></div>
+    </div>
+  </div>
+
+  <div class="sos-wrap">
+    <div class="sos-outer">
+      <div class="pulse-ring pr1"></div>
+      <div class="pulse-ring pr2"></div>
+      <div class="pulse-ring pr3"></div>
+      <button class="sos-btn" id="sosBtn" onclick="triggerSOS()">
+        <div class="sos-btn-label">SOS</div>
+        <div class="sos-btn-sub">PRESS & HOLD</div>
+      </button>
+    </div>
+
+    <div class="shake-bar-wrap">
+      <div class="shake-bar-label">SHAKE SENSITIVITY</div>
+      <div class="shake-bar-bg"><div class="shake-bar-fill" id="shakeBar"></div></div>
+    </div>
+
+    <div class="shake-hint">
+      <strong>SHAKE YOUR PHONE</strong> or press SOS<br>to trigger emergency response
+    </div>
+  </div>
+
+  <div class="contacts-row" id="contactsRow">
+    <div class="contact-item">
+      <div class="contact-av" style="background:rgba(230,57,70,0.15)">👩</div>
+      <div class="contact-nm" id="c1name">Contact 1</div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-av" style="background:rgba(36,113,163,0.15)">👩‍🦱</div>
+      <div class="contact-nm" id="c2name">Contact 2</div>
+    </div>
+    <div class="contact-item">
+      <div class="contact-av" style="background:rgba(26,188,156,0.15)">👮</div>
+      <div class="contact-nm">Police</div>
+    </div>
+  </div>
+
+  <div class="bottom-nav">
+    <div class="nav-tab active">
+      <div class="nav-tab-icon">🛡️</div>
+      <div class="nav-tab-label">HOME</div>
+    </div>
+    <div class="nav-tab" onclick="showScreen('setup-screen')">
+      <div class="nav-tab-icon">⚙️</div>
+      <div class="nav-tab-label">SETUP</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── COUNTDOWN SCREEN ── -->
+<div class="screen" id="countdown-screen">
+  <div class="alert-banner">
+    <div class="alert-dot"></div>
+    <div class="alert-text">SOS ACTIVATED — SENDING IN</div>
+  </div>
+  <div class="countdown-num" id="cdNum">5</div>
+  <div class="countdown-label">SECONDS TO CANCEL</div>
+  <button class="cancel-sos" onclick="cancelSOS()">✕ CANCEL SOS</button>
+</div>
+
+<!-- ── ACTIVE SCREEN ── -->
+<div class="screen" id="active-screen">
+  <div class="active-header">
+    <div class="active-title">🔴 SOS ACTIVE</div>
+    <div class="active-timer" id="activeTimer">00:00</div>
+  </div>
+  <div class="active-body">
+    <div class="status-card">
+      <div class="status-card-icon">📍</div>
+      <div class="status-card-info">
+        <div class="status-card-title">Location Shared</div>
+        <div class="status-card-sub" id="activeLocText">Fetching coordinates…</div>
+      </div>
+      <div class="status-badge badge-green">LIVE</div>
+    </div>
+    <div class="status-card">
+      <div class="status-card-icon">📲</div>
+      <div class="status-card-info">
+        <div class="status-card-title">Emergency Contacts</div>
+        <div class="status-card-sub" id="alertSentText">Sending alerts…</div>
+      </div>
+      <div class="status-badge badge-green" id="contactsBadge">SENT ✓</div>
+    </div>
+    <div class="status-card">
+      <div class="status-card-icon">🚁</div>
+      <div class="status-card-info">
+        <div class="status-card-title">Drone Surveillance</div>
+        <div class="status-card-sub">Unit dispatched to your location</div>
+      </div>
+      <div class="status-badge badge-yellow">EN ROUTE</div>
+    </div>
+    <div class="status-card">
+      <div class="status-card-icon">🚔</div>
+      <div class="status-card-info">
+        <div class="status-card-title">Police Notified</div>
+        <div class="status-card-sub">Nearest station alerted with live feed</div>
+      </div>
+      <div class="status-badge badge-red">ALERT</div>
+    </div>
+    <div class="coord-box" id="coordBox">
+      Acquiring GPS coordinates…
+    </div>
+  </div>
+  <button class="resolve-btn" onclick="resolveSOSBtn()">✓ MARK AS SAFE — RESOLVE SOS</button>
+</div>
+
+<!-- ── SETUP SCREEN ── -->
+<div class="screen" id="setup-screen">
+  <div class="setup-header">
+    <div class="setup-title">SETUP</div>
+    <div class="setup-sub">PERSONALISE YOUR REFLEX PROFILE</div>
+  </div>
+  <div class="setup-body">
+    <div class="form-group">
+      <div class="form-label">Your Name</div>
+      <input class="form-input" id="inputName" placeholder="e.g. Aasritha" type="text">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Emergency Contact 1 Name</div>
+      <input class="form-input" id="inputC1Name" placeholder="e.g. Amma" type="text">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Emergency Contact 1 WhatsApp No.</div>
+      <input class="form-input" id="inputC1Phone" placeholder="+91XXXXXXXXXX" type="tel">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Emergency Contact 2 Name</div>
+      <input class="form-input" id="inputC2Name" placeholder="e.g. Jahnavi" type="text">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Emergency Contact 2 WhatsApp No.</div>
+      <input class="form-input" id="inputC2Phone" placeholder="+91XXXXXXXXXX" type="tel">
+    </div>
+    <div class="form-group">
+      <div class="form-label">Shake Sensitivity (1=low, 3=high)</div>
+      <input class="form-input" id="inputSensitivity" placeholder="2" type="number" min="1" max="3">
+    </div>
+    <button class="save-btn" onclick="saveSettings()">SAVE SETTINGS</button>
+    <button class="save-btn" style="background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.6)" onclick="showScreen('home')">← BACK TO HOME</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── STATE ──
+let userLat = null, userLng = null;
+let countdownInterval = null, timerInterval = null;
+let timerSeconds = 0;
+let settings = {};
+let shakeThreshold = 15;
+
+// ── LOAD SETTINGS ──
+function loadSettings() {
+  try {
+    settings = JSON.parse(localStorage.getItem('reflexSettings') || '{}');
+    if (settings.name)    document.getElementById('displayName').textContent = settings.name;
+    if (settings.c1Name)  { document.getElementById('c1name').textContent = settings.c1Name; document.getElementById('inputC1Name').value = settings.c1Name; }
+    if (settings.c2Name)  { document.getElementById('c2name').textContent = settings.c2Name; document.getElementById('inputC2Name').value = settings.c2Name; }
+    if (settings.c1Phone) document.getElementById('inputC1Phone').value = settings.c1Phone;
+    if (settings.c2Phone) document.getElementById('inputC2Phone').value = settings.c2Phone;
+    if (settings.name)    document.getElementById('inputName').value = settings.name;
+    if (settings.sensitivity) document.getElementById('inputSensitivity').value = settings.sensitivity;
+    const sens = parseInt(settings.sensitivity || 2);
+    shakeThreshold = sens === 1 ? 25 : sens === 3 ? 10 : 15;
+  } catch(e) {}
+}
+
+function saveSettings() {
+  settings = {
+    name: document.getElementById('inputName').value || 'User',
+    c1Name:  document.getElementById('inputC1Name').value,
+    c1Phone: document.getElementById('inputC1Phone').value,
+    c2Name:  document.getElementById('inputC2Name').value,
+    c2Phone: document.getElementById('inputC2Phone').value,
+    sensitivity: document.getElementById('inputSensitivity').value || '2',
+  };
+  localStorage.setItem('reflexSettings', JSON.stringify(settings));
+  document.getElementById('displayName').textContent = settings.name;
+  if (settings.c1Name) document.getElementById('c1name').textContent = settings.c1Name;
+  if (settings.c2Name) document.getElementById('c2name').textContent = settings.c2Name;
+  const sens = parseInt(settings.sensitivity);
+  shakeThreshold = sens === 1 ? 25 : sens === 3 ? 10 : 15;
+  showToast('✅ Settings saved!');
+  setTimeout(() => showScreen('home'), 1000);
+}
+
+// ── PERMISSIONS ──
+async function requestPermissions() {
+  document.getElementById('permOverlay').style.display = 'none';
+  getLocation();
+  setupShake();
+}
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockDisplay').textContent =
+    now.getHours().toString().padStart(2,'0') + ':' +
+    now.getMinutes().toString().padStart(2,'0');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ── LOCATION ──
+function getLocation() {
+  if (!navigator.geolocation) {
+    document.getElementById('locationLabel').textContent = 'GPS not available';
+    return;
+  }
+  navigator.geolocation.watchPosition(pos => {
+    userLat = pos.coords.latitude.toFixed(5);
+    userLng = pos.coords.longitude.toFixed(5);
+    document.getElementById('locationLabel').textContent = `${userLat}°N, ${userLng}°E`;
+    document.getElementById('activeLocText').textContent = `${userLat}°N, ${userLng}°E`;
+    document.getElementById('coordBox').innerHTML =
+      `<strong>LAT:</strong> ${userLat}° N<br>` +
+      `<strong>LNG:</strong> ${userLng}° E<br>` +
+      `<strong>ACC:</strong> ±${Math.round(pos.coords.accuracy)}m<br>` +
+      `<strong>MAP:</strong> maps.google.com/?q=${userLat},${userLng}`;
+  }, () => {
+    document.getElementById('locationLabel').textContent = 'Location unavailable';
+  }, { enableHighAccuracy: true, maximumAge: 5000 });
+}
+
+// ── SHAKE DETECTION ──
+let lastX = 0, lastY = 0, lastZ = 0;
+let shakeLastTime = 0;
+
+function setupShake() {
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+    DeviceMotionEvent.requestPermission().then(r => {
+      if (r === 'granted') window.addEventListener('devicemotion', handleMotion);
+    }).catch(console.error);
+  } else {
+    window.addEventListener('devicemotion', handleMotion);
+  }
+}
+
+function handleMotion(e) {
+  const acc = e.accelerationIncludingGravity;
+  if (!acc) return;
+  const now = Date.now();
+  if (now - shakeLastTime < 100) return;
+
+  const dx = Math.abs(acc.x - lastX);
+  const dy = Math.abs(acc.y - lastY);
+  const dz = Math.abs(acc.z - lastZ);
+  const delta = (dx + dy + dz) / 3;
+
+  // Update sensitivity bar
+  const pct = Math.min(100, (delta / shakeThreshold) * 100);
+  document.getElementById('shakeBar').style.width = pct + '%';
+
+  if (delta > shakeThreshold && document.getElementById('home').classList.contains('active')) {
+    shakeLastTime = now;
+    triggerSOS();
+  }
+
+  lastX = acc.x; lastY = acc.y; lastZ = acc.z;
+}
+
+// ── SOS FLOW ──
+function triggerSOS() {
+  // Vibrate if supported
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
+  showScreen('countdown-screen');
+  let c = 5;
+  document.getElementById('cdNum').textContent = c;
+  countdownInterval = setInterval(() => {
+    c--;
+    document.getElementById('cdNum').textContent = c;
+    if (c <= 0) {
+      clearInterval(countdownInterval);
+      activateSOS();
+    }
+  }, 1000);
+}
+
+function cancelSOS() {
+  clearInterval(countdownInterval);
+  if (navigator.vibrate) navigator.vibrate(100);
+  showToast('✅ SOS Cancelled — You are safe');
+  showScreen('home');
+}
+
+function activateSOS() {
+  if (navigator.vibrate) navigator.vibrate([500, 200, 500]);
+  showScreen('active-screen');
+  startTimer();
+  sendWhatsAppAlerts();
+}
+
+function resolveSOSBtn() {
+  clearInterval(timerInterval);
+  timerSeconds = 0;
+  showToast('✅ SOS Resolved — Marked as Safe');
+  setTimeout(() => showScreen('home'), 1500);
+}
+
+// ── TIMER ──
+function startTimer() {
+  timerSeconds = 0;
+  timerInterval = setInterval(() => {
+    timerSeconds++;
+    const m = Math.floor(timerSeconds / 60).toString().padStart(2,'0');
+    const s = (timerSeconds % 60).toString().padStart(2,'0');
+    document.getElementById('activeTimer').textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+// ── SEND WHATSAPP ALERTS ──
+function sendWhatsAppAlerts() {
+  const name = settings.name || 'User';
+  const lat  = userLat  || 'Unknown';
+  const lng  = userLng  || 'Unknown';
+  const mapLink = (userLat && userLng)
+    ? `https://maps.google.com/?q=${userLat},${userLng}`
+    : 'Location unavailable';
+
+  const msg = encodeURIComponent(
+    `🚨 *REFLEX EMERGENCY ALERT* 🚨\n\n` +
+    `*${name}* has triggered an SOS!\n\n` +
+    `📍 *Location:* ${mapLink}\n` +
+    `🗺️ *Coordinates:* ${lat}°N, ${lng}°E\n\n` +
+    `⏰ *Time:* ${new Date().toLocaleTimeString()}\n\n` +
+    `Please respond immediately. This is an automated alert from REFLEX Safety System.`
+  );
+
+  // Open WhatsApp for each contact
+  const contacts = [
+    settings.c1Phone,
+    settings.c2Phone
+  ].filter(Boolean);
+
+  if (contacts.length === 0) {
+    document.getElementById('alertSentText').textContent = 'No contacts set — add in Setup';
+    document.getElementById('contactsBadge').textContent = 'SETUP NEEDED';
+    document.getElementById('contactsBadge').className = 'status-badge badge-yellow';
+    return;
+  }
+
+  // Open first contact via WhatsApp
+  const phone = contacts[0].replace(/\D/g, '');
+  setTimeout(() => {
+    window.open(`https://wa.me/${phone}?text=${msg}`, '_blank');
+    document.getElementById('alertSentText').textContent =
+      `WhatsApp opened for ${settings.c1Name || 'Contact 1'} — tap Send!`;
+    document.getElementById('contactsBadge').textContent = 'SENT ✓';
+  }, 800);
+
+  // Open second contact after a short delay
+  if (contacts[1]) {
+    const phone2 = contacts[1].replace(/\D/g, '');
+    setTimeout(() => {
+      window.open(`https://wa.me/${phone2}?text=${msg}`, '_blank');
+    }, 2000);
+  }
+}
+
+// ── SCREEN HELPER ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── INIT ──
+loadSettings();
+</script>
+</body>
+</html>
